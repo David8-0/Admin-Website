@@ -2,18 +2,46 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import backgroundImg from "../../assets/Login/login.svg";
+import { login } from "../../network/auth.js";
+
+const roletypes = {
+  buyer: "buyer",
+  broker: "broker",
+  admin: "admin"
+};
 
 export default function SignIn() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [keepSignedIn, setKeepSignedIn] = useState(false);
-  const navigate = useNavigate();
+  const [errMessage, setErrMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    localStorage.setItem("user", JSON.stringify({ email }));
-    navigate("/home");
+    try{
+      const response = await login({
+        email:email,
+        password:password
+      })
+      const userData = response?.data;
+      const userRole = userData?.data?.user.role;
+  
+      if(userRole === roletypes.admin){
+        localStorage.setItem("user", JSON.stringify({
+          ...userData.data.user,
+          role: userRole
+        }));
+        navigate('/admin-dashboard');
+      } else {
+        setErrMessage("Invalid email or password. Please try again.");
+      }
+    }catch(err){
+      setErrMessage("Invalid email or password. Please try again.")
+    }
+
+    //localStorage.setItem("user", JSON.stringify({ email }));
   };
   return (
     <div
@@ -24,6 +52,9 @@ export default function SignIn() {
         {/* Header */}
         <h2 className="text-3xl font-bold mb-2">Sign in</h2>
         <p className="text-sm mb-6">Welcome Back Admin</p>
+
+        {/* Error Message */}
+        {errMessage && <p className="text-yellow-400 font-medium mb-4">{errMessage}</p>}
 
         {/* Sub-header */}
         <p className="font-semibold mb-4">Sign In with email address</p>
