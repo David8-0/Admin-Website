@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaHome } from "react-icons/fa";
 import backgroundImg from "../../assets/Login/login.svg";
 
 export default function ForgotPassword() {
@@ -35,18 +34,10 @@ export default function ForgotPassword() {
   };
 
   return (
-<div
+    <div
       className="fixed inset-0 bg-cover bg-center flex items-center justify-center"
       style={{ backgroundImage: `url(${backgroundImg})` }}
     >
-      {/* Home Icon */}
-      <Link
-        to="/"
-        className="absolute top-4 right-4 text-white hover:text-gray-200 z-10"
-      >
-        <FaHome size={24} />
-      </Link>
-
       <div className="relative bg-[#002349] p-8 rounded-xl shadow-xl w-full max-w-sm text-white">
         {step === 1 && (
           <>
@@ -97,34 +88,28 @@ export default function ForgotPassword() {
 
         {step === 3 && (
           <form onSubmit={handlePasswordChange} className="text-center">
-            <h2 className="text-xl font-bold mb-6">Changing Your Password</h2>
-            <div className="text-left mb-3">
-              <label className="block mb-1 text-sm">Enter new password</label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="New password"
-                className="w-full py-2 px-3 text-gray-900 bg-white rounded"
-                required
-              />
-            </div>
-            <div className="text-left mb-5">
-              <label className="block mb-1 text-sm">Verify New Password</label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm password"
-                className="w-full py-2 px-3 text-gray-900 bg-white rounded"
-                required
-              />
-            </div>
+            <h2 className="text-xl font-bold mb-4">Set New Password</h2>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+              placeholder="New password"
+              className="w-full mb-4 py-2 px-3 text-gray-900 bg-white rounded"
+            />
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              placeholder="Confirm password"
+              className="w-full mb-4 py-2 px-3 text-gray-900 bg-white rounded"
+            />
             <button
               type="submit"
               className="w-full py-2 bg-white text-[#002349] font-semibold rounded"
             >
-              Save
+              Change Password
             </button>
           </form>
         )}
