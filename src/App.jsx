@@ -10,6 +10,7 @@ import AllBrokers from "./pages/AllBrokers/allbrokers";
 import AddProperty from "./pages/AddProperty/addproperty";
 import PropertyList from "./pages/PropertyList/propertylist";
 import ForgotPassword from "./pages/ForgetPassword/forgetpassword";
+import AdminDashboard from "./pages/AdminDashboard/adminDashboard";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
       {/* Protected routes */}
       <Route path="/*" element={<Layout />}>
         <Route path="home" element={<Home />} />
+        <Route path="admin-dashboard" element={<AdminDashboard />} />
         {/* <Route path="reviews" element={<ReviewsList />} /> */}
         <Route path="appointments" element={<AppointmentList />} />
         <Route path="buyer" element={<BuyerPage />} />

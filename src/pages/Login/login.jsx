@@ -33,7 +33,7 @@ export default function SignIn() {
           ...userData.data.user,
           role: userRole
         }));
-        navigate('/admin-dashboard');
+        navigate('/home');
       } else {
         setErrMessage("Invalid email or password. Please try again.");
       }
