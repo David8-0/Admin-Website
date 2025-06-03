@@ -24,19 +24,19 @@ const NAV_ITEMS = [
     ],
   },
   {
-    name: "Property",
-    path: "/property",
-    children: [
-      { name: "Add Property", path: "/add-property" },
-      { name: "Property List", path: "/view-property" },
-    ],
-  },
-  {
     name: "Project",
     path: "/project",
     children: [
       { name: "Add Project", path: "/add-project" },
       { name: "Project List", path: "/view-project" },
+    ],
+  },
+  {
+    name: "Property",
+    path: "/property",
+    children: [
+      { name: "Add Property", path: "/add-property" },
+      { name: "Property List", path: "/view-property" },
     ],
   },
 ];

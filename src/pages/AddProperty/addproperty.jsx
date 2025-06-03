@@ -152,6 +152,7 @@ export default function AddProperty() {
                 ["Property Type", "type"],
                 ["No Of Bedrooms", "beds"],
                 ["No Of Bathrooms", "baths"],
+                ["Project-ID", "ID"],
               ].map(([label, name]) => (
                 <div key={name} className="space-y-[2px]">
                   <label htmlFor={name}>{label}</label>
