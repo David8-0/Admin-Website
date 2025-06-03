@@ -31,6 +31,14 @@ const NAV_ITEMS = [
       { name: "Property List", path: "/view-property" },
     ],
   },
+  {
+    name: "Project",
+    path: "/project",
+    children: [
+      { name: "Add Project", path: "/add-project" },
+      { name: "Project List", path: "/view-project" },
+    ],
+  },
 ];
 
 export default function Navbar() {

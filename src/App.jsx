@@ -11,6 +11,8 @@ import AddProperty from "./pages/AddProperty/addproperty";
 import PropertyList from "./pages/PropertyList/propertylist";
 import ForgotPassword from "./pages/ForgetPassword/forgetpassword";
 import AdminDashboard from "./pages/AdminDashboard/adminDashboard";
+import AddProject from "./pages/AddProject/addproject";
+import ProjectList from "./pages/ProjectList/projectlist";
 
 function App() {
   return (
@@ -31,6 +33,8 @@ function App() {
         <Route path="view-brokers" element={<AllBrokers />} />
         <Route path="add-property" element={<AddProperty />} />
         <Route path="view-property" element={<PropertyList />} />
+        <Route path="add-project" element={<AddProject />} />
+        <Route path="view-project" element={<ProjectList />} />
       </Route>
     </Routes>
   );
