@@ -13,6 +13,7 @@ import ForgotPassword from "./pages/ForgetPassword/forgetpassword";
 import AdminDashboard from "./pages/AdminDashboard/adminDashboard";
 import AddProject from "./pages/AddProject/addproject";
 import ProjectList from "./pages/ProjectList/projectlist";
+import Statistics from "./pages/Statistics/Statistics";
 
 function App() {
   return (
@@ -24,7 +25,7 @@ function App() {
       
       {/* Protected routes */}
       <Route path="/*" element={<Layout />}>
-        <Route path="home" element={<Home />} />
+        <Route path="home" element={<Statistics />} />
         <Route path="admin-dashboard" element={<AdminDashboard />} />
         {/* <Route path="reviews" element={<ReviewsList />} /> */}
         <Route path="appointments" element={<AppointmentList />} />

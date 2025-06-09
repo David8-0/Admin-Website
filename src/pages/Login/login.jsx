@@ -1,8 +1,9 @@
-// src/components/SignIn.jsx
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import backgroundImg from "../../assets/Login/login.svg";
 import { login } from "../../network/auth.js";
+import { setCredentials, setLoading, setError } from "../../store/authSlice";
 
 const roletypes = {
   buyer: "buyer",
@@ -12,33 +13,46 @@ const roletypes = {
 
 export default function SignIn() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [keepSignedIn, setKeepSignedIn] = useState(false);
   const [errMessage, setErrMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    dispatch(setLoading(true));
 
-    try{
+    try {
       const response = await login({
-        email:email,
-        password:password
-      })
+        email: email,
+        password: password
+      });
       const userData = response?.data;
       const userRole = userData?.data?.user.role;
-  
-      if(userRole === roletypes.admin){
-        localStorage.setItem("user", JSON.stringify({
-          ...userData.data.user,
-          role: userRole
+      const token = userData?.data?.token;
+
+      if (userRole === roletypes.admin) {
+        // Update Redux store with new user data
+        dispatch(setCredentials({
+          user: {
+            ...userData.data.user,
+            role: userRole
+          },
+          token: token
         }));
+        
         navigate('/home');
       } else {
-        setErrMessage("Invalid email or password. Please try again.");
+        const errorMessage = "Access denied. Admin privileges required.";
+        dispatch(setError(errorMessage));
+        setErrMessage(errorMessage);
       }
-    }catch(err){
-      setErrMessage("Invalid email or password. Please try again.")
+    } catch (_err) {
+      const errorMessage = "Invalid email or password. Please try again.";
+      dispatch(setError(errorMessage));
+      setErrMessage(errorMessage);
+    } finally {
+      dispatch(setLoading(false));
     }
 
     //localStorage.setItem("user", JSON.stringify({ email }));
@@ -97,16 +111,7 @@ export default function SignIn() {
             "
           />
 
-          <div className="flex items-center justify-between mb-4 text-sm">
-            <label className="inline-flex items-center">
-              <input
-                type="checkbox"
-                checked={keepSignedIn}
-                onChange={(e) => setKeepSignedIn(e.target.checked)}
-                className="form-checkbox h-4 w-4 text-white"
-              />
-              <span className="ml-2">Keep Me Signed In</span>
-            </label>
+          <div className="flex justify-end mb-4 text-sm">
             <Link
               to="/forgot-password"
               className="underline hover:text-gray-300"
