@@ -1,119 +1,85 @@
-// src/components/AppointmentList.jsx
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { getAppointments } from '../../network/appointments';
+import { 
+  setAppointmentsData, 
+  setAppointmentsError, 
+  setAppointmentsLoading 
+} from '../../store/appointmentsSlice';
 
-const appointments = [
-  {
-    id: "#AD01234",
-    date: "25/04/2025",
-    buyer: "James Wheelock",
-    property: "Central Park 2851",
-    location: "Center London",
-    price: "2,000,000 GBP",
-    type: "Sale",
-    broker: "Kevin A.",
-    status: "Pending",
-  },
-  {
-    id: "#AD01235",
-    date: "26/04/2025",
-    buyer: "Amir Tawfik",
-    property: "Seaside Villa",
-    location: "Alexandria",
-    price: "1,500,000 EGP",
-    type: "Rent",
-    broker: "Broker 1",
-    status: "Done",
-  },
-  {
-    id: "#AD01236",
-    date: "27/04/2025",
-    buyer: "Ahmed Salah",
-    property: "Mountain Cabin",
-    location: "Denver",
-    price: "850,000 USD",
-    type: "Sale",
-    broker: "Broker 2",
-    status: "Pending",
-  },
-  {
-    id: "#AD01237",
-    date: "28/04/2025",
-    buyer: "Sara Hassan",
-    property: "Beach House",
-    location: "Miami",
-    price: "3,200,000 USD",
-    type: "Sale",
-    broker: "Broker 3",
-    status: "Pending",
-  },
-  {
-    id: "#AD01238",
-    date: "29/04/2025",
-    buyer: "John Doe",
-    property: "City Apartment",
-    location: "New York",
-    price: "1,200,000 USD",
-    type: "Rent",
-    broker: "Broker 4",
-    status: "Done",
-  },
-  {
-    id: "#AD01239",
-    date: "30/04/2025",
-    buyer: "Mary Smith",
-    property: "Country Cottage",
-    location: "Cotswolds",
-    price: "950,000 GBP",
-    type: "Sale",
-    broker: "Kevin A.",
-    status: "Pending",
-  },
-  {
-    id: "#AD01240",
-    date: "01/05/2025",
-    buyer: "Ali Ahmed",
-    property: "Penthouse",
-    location: "Dubai",
-    price: "4,500,000 AED",
-    type: "Sale",
-    broker: "Broker 1",
-    status: "Pending",
-  },
-  {
-    id: "#AD01241",
-    date: "02/05/2025",
-    buyer: "Lina Khan",
-    property: "Studio Flat",
-    location: "Paris",
-    price: "750,000 EUR",
-    type: "Rent",
-    broker: "Broker 2",
-    status: "Done",
-  },
-  {
-    id: "#AD01242",
-    date: "03/05/2025",
-    buyer: "Omar Farouk",
-    property: "Lake House",
-    location: "Zurich",
-    price: "2,800,000 CHF",
-    type: "Sale",
-    broker: "Broker 3",
-    status: "Pending",
-  },
-  {
-    id: "#AD01243",
-    date: "04/05/2025",
-    buyer: "Eve Johnson",
-    property: "Ranch",
-    location: "Texas",
-    price: "1,100,000 USD",
-    type: "Sale",
-    broker: "Broker 4",
-    status: "Pending",
-  },
-];
+const formatDate = (dateString) => {
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(dateString).toLocaleDateString('en-US', options);
+};
 
 export default function AppointmentList() {
+  const dispatch = useDispatch();
+  const { appointmentsData, loading, error } = useSelector((state) => state.appointments);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        dispatch(setAppointmentsLoading(true));
+        const response = await getAppointments();
+        console.log(response.data.data);
+        dispatch(setAppointmentsData(response.data.data));
+      } catch (err) {
+        dispatch(setAppointmentsError(err.message || 'Failed to fetch appointments'));
+      } finally {
+        dispatch(setAppointmentsLoading(false));
+      }
+    };
+
+    fetchAppointments();
+  }, [dispatch]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border-l-4 border-red-500 p-4">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <p className="text-sm text-red-700">
+              Error: {error}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!appointmentsData || appointmentsData.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">No appointments found</p>
+      </div>
+    );
+  }
+
+  const mappedAppointments = appointmentsData.map(appt => ({
+    id: appt._id,
+    date: formatDate(appt.appointmentDate),
+    buyer: appt.buyerId?.username || 'N/A',
+    property: appt.property?.title || 'N/A',
+    location: appt.property?.location || 'N/A',
+    price: appt.property?.priceRange ? appt.property.priceRange.replace(/_/g, ' ') : 'N/A',
+    type: appt.type.charAt(0).toUpperCase() + appt.type.slice(1),
+    broker: appt.brokerId?.username || 'N/A',
+    status: appt.status.charAt(0).toUpperCase() + appt.status.slice(1)
+  }));
+
   return (
     <div className="max-w-7xl mx-auto my-8 px-4 sm:px-6 lg:px-8">
       <div className="overflow-x-auto">
@@ -142,7 +108,7 @@ export default function AppointmentList() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {appointments.map((appt) => (
+              {mappedAppointments.map((appt) => (
                 <tr key={appt.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">
                     {appt.id}
