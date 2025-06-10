@@ -3,6 +3,7 @@ import authSlice from "./authSlice";
 import statisticsReducer from "./statisticsSlice";
 import appointmentsReducer from "./appointmentsSlice";
 import usersReducer from "./usersSlice";
+import buyersReducer from './buyersSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,5 +11,6 @@ export const store = configureStore({
     statistics: statisticsReducer,
     appointments: appointmentsReducer,
     users: usersReducer,
+    buyers: buyersReducer,
   },
 });
