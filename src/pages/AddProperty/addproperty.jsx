@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { PROPERTY_TYPES, AREA_RANGES, PRICE_RANGES, PROPERTY_STATUS } from "../../../utils/constants";
+import { addPropertyToProject } from "../../network/properties";
+import { uploadImages } from "../../network/images";
 
 const NAVY = "#002349";
 const BORDER_BLUE = "#0BA5FF";
@@ -19,8 +21,11 @@ export default function AddProperty() {
     status: "available",
     bedrooms: "",
     bathrooms: "",
-    images: null,
+    projectId: "",
   });
+  const [images, setImages] = useState([]);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [isImageChanged, setIsImageChanged] = useState(false);
 
   const handleChange = ({ target: { name, value } }) =>
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -41,6 +46,10 @@ export default function AddProperty() {
       return;
     }
 
+    // Add new files to imageFiles array
+    setImageFiles(prev => [...prev, ...files]);
+    setIsImageChanged(true);
+
     // Read all files
     const readers = files.map(file => {
       return new Promise((resolve) => {
@@ -50,13 +59,13 @@ export default function AddProperty() {
       });
     });
 
-    // Update form with all images
+    // Update images state with new previews
     Promise.all(readers).then(results => {
-      setForm(prev => ({ ...prev, images: results }));
+      setImages(prev => [...prev, ...results]);
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Required fields
@@ -68,6 +77,7 @@ export default function AddProperty() {
       "priceRange",
       "bedrooms",
       "bathrooms",
+      "projectId",
     ];
 
     // Check empties
@@ -81,33 +91,47 @@ export default function AddProperty() {
       });
     }
 
-    // Log form values
-    console.log('Form Values:', {
-      title: form.title,
-      description: form.description,
-      type: form.type,
-      areaRange: form.areaRange,
-      priceRange: form.priceRange,
-      status: form.status,
-      bedrooms: form.bedrooms,
-      bathrooms: form.bathrooms,
-      images: form.images
-    });
+    if (imageFiles.length === 0) {
+      return Swal.fire({
+        icon: "error",
+        title: "Missing images",
+        text: "Please add at least one property image.",
+        confirmButtonColor: NAVY,
+      });
+    }
 
-    // Save to localStorage
-    const existing = JSON.parse(localStorage.getItem("properties") || "[]");
-    existing.push(form);
-    localStorage.setItem("properties", JSON.stringify(existing));
+    try {
+      // Upload images first
+      const uploadResp = await uploadImages({ images: imageFiles, type: "property" });
+      const imageUrls = uploadResp.data.images;
 
-    // Success alert then redirect
-    Swal.fire({
-      icon: "success",
-      title: "Added successfully!",
-      text: "Your property has been saved.",
-      confirmButtonColor: NAVY,
-    }).then(() => {
-      navigate("/view-property");
-    });
+      // Prepare property data
+      const propertyData = {
+        ...form,
+        images: imageUrls
+      };
+
+      // Add property to project
+      await addPropertyToProject(form.projectId, propertyData);
+
+      // Success alert then redirect
+      Swal.fire({
+        icon: "success",
+        title: "Added successfully!",
+        text: "Your property has been saved.",
+        confirmButtonColor: NAVY,
+      }).then(() => {
+        navigate("/view-property");
+      });
+    } catch (error) {
+      console.error('Property operation error:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to add property",
+        confirmButtonColor: NAVY,
+      });
+    }
   };
 
   const handleCancelClick = () => {
@@ -136,30 +160,56 @@ export default function AddProperty() {
         >
           {/* image picker */}
           <div className="mb-6">
-            <label className="group relative block h-40 w-40 overflow-hidden rounded">
-              {form.images ? (
-                <img
-                  src={form.images[0]}
-                  alt="property"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gray-200 text-xs font-semibold text-gray-600">
-                  Click to add photo
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {images.map((image, index) => (
+                <div key={index} className="relative group">
+                  <img
+                    src={image}
+                    alt={`property ${index + 1}`}
+                    className="h-40 w-full object-cover rounded"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImages(prev => prev.filter((_, i) => i !== index));
+                      setImageFiles(prev => prev.filter((_, i) => i !== index));
+                      setIsImageChanged(true);
+                    }}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    ×
+                  </button>
                 </div>
-              )}
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/jpg,image/gif"
-                className="absolute inset-0 cursor-pointer opacity-0"
-                onChange={handleFile}
-                multiple={true}
-              />
-            </label>
+              ))}
+              <label className="group relative block h-40 w-full overflow-hidden rounded border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors">
+                <div className="flex h-full w-full items-center justify-center bg-gray-50 text-xs font-semibold text-gray-600">
+                  Click to add photos
+                </div>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/jpg,image/gif"
+                  className="absolute inset-0 cursor-pointer opacity-0"
+                  onChange={handleFile}
+                  multiple={true}
+                />
+              </label>
+            </div>
           </div>
 
           {/* form fields */}
           <div className="grid gap-4 text-sm text-white">
+            <div className="space-y-[2px]">
+              <label htmlFor="projectId">Project ID</label>
+              <input
+                id="projectId"
+                name="projectId"
+                value={form.projectId}
+                onChange={handleChange}
+                className="h-8 w-full rounded bg-white px-2 text-gray-900 outline-none"
+                placeholder="Enter project ID"
+              />
+            </div>
+
             <div className="space-y-[2px]">
               <label htmlFor="title">Title</label>
               <input
@@ -168,6 +218,7 @@ export default function AddProperty() {
                 value={form.title}
                 onChange={handleChange}
                 className="h-8 w-full rounded bg-white px-2 text-gray-900 outline-none"
+                placeholder="Enter property title"
               />
             </div>
 
@@ -180,6 +231,7 @@ export default function AddProperty() {
                 onChange={handleChange}
                 rows={3}
                 className="w-full rounded bg-white p-2 text-gray-900 outline-none"
+                placeholder="Enter property description"
               />
             </div>
 
@@ -265,6 +317,7 @@ export default function AddProperty() {
                   value={form.bedrooms}
                   onChange={handleChange}
                   className="h-8 w-full rounded bg-white px-2 text-gray-900 outline-none"
+                  placeholder="Enter number of bedrooms"
                 />
               </div>
 
@@ -278,6 +331,7 @@ export default function AddProperty() {
                   value={form.bathrooms}
                   onChange={handleChange}
                   className="h-8 w-full rounded bg-white px-2 text-gray-900 outline-none"
+                  placeholder="Enter number of bathrooms"
                 />
               </div>
             </div>
