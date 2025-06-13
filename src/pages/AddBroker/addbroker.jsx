@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 import Swal from "sweetalert2";
+import { uploadImages } from "../../network/images";
+import { addUser } from "../../network/users";
 
 const InputField = ({ label, name, value, onChange, type = "text" }) => (
   <div className="flex flex-col gap-1">
@@ -27,24 +29,18 @@ export default function AddBroker() {
   const navigate = useNavigate();
 
   const initialState = {
-    firstName: "",
-    lastName: "",
-    dob: "",
-    title: "",
-    country: "",
-    address: "",
-    brokerId: "",
-    postalCode: "",
+    username: "",
     email: "",
+    password: "",
+    confirmPassword: "",
+    role: "broker",
     phone: "",
-    previousAgency: "",
-    agency: "",
-    agentLicense: "",
-    taxNumber: "",
+    image: null,
   };
 
   const [broker, setBroker] = useState(initialState);
   const [avatar, setAvatar] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
 
   /* handle change */
   const handleChange = (e) => {
@@ -52,32 +48,69 @@ export default function AddBroker() {
     setBroker((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleConfirm = () => {
-    const allFilled = Object.values(broker).every(
-      (v) => v !== null && v !== undefined && String(v).trim() !== ""
-    );
-
-    if (!allFilled || !avatar) {
-      Swal.fire("Error", "Please fill in all fields and add a photo", "error");
+  const handleConfirm = async () => {
+    // Check if all required fields are filled
+    const requiredFields = ['username', 'email', 'password', 'confirmPassword', 'phone'];
+    const missingFields = requiredFields.filter(field => !broker[field]?.trim());
+    
+    if (missingFields.length > 0) {
+      Swal.fire("Error", `Please fill in all required fields: ${missingFields.join(', ')}`, "error");
       return;
     }
 
-    const stored = JSON.parse(localStorage.getItem("brokers") || "[]");
-    stored.push({
-      id: Date.now(),
-      ...broker,
-      avatar,
-    });
-    localStorage.setItem("brokers", JSON.stringify(stored));
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(broker.email)) {
+      Swal.fire("Error", "Please enter a valid email address", "error");
+      return;
+    }
 
-    Swal.fire({
-      icon: "success",
-      title: "Broker added successfully!",
-      showConfirmButton: false,
-      timer: 1200,
-    }).then(() => {
-      navigate("/view-brokers");
-    });
+    // Validate password match
+    if (broker.password !== broker.confirmPassword) {
+      Swal.fire("Error", "Passwords do not match", "error");
+      return;
+    }
+
+    // Validate phone number to accept only numbers
+    const phoneRegex = /^\d+$/;
+    if (!phoneRegex.test(broker.phone)) {
+      Swal.fire("Error", "Phone number must contain only digits", "error");
+      return;
+    }
+
+    if (!avatarFile) {
+      Swal.fire("Error", "Please add a photo", "error");
+      return;
+    }
+
+    try {
+      const uploadResp = await uploadImages({ images: [avatarFile], type: "user" });
+      const imageUrl = uploadResp.data.images;
+
+      const userData = {
+        username: broker.username,
+        email: broker.email,
+        password: broker.password,
+        confirmPassword: broker.confirmPassword,
+        phone: broker.phone,
+        role: broker.role,
+        image: imageUrl
+      };
+
+      await addUser(userData);
+
+      Swal.fire({
+        icon: "success",
+        title: "Broker added successfully!",
+        showConfirmButton: false,
+        timer: 1200,
+      }).then(() => {
+        navigate("/view-brokers");
+      });
+    } catch (err) {
+      console.error("Error:", err.response.data.error.message);
+      Swal.fire("Error", err.response.data.error.message, "error");
+    }
   };
 
   /* cancel */
@@ -97,6 +130,7 @@ export default function AddBroker() {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setAvatarFile(file);
       const reader = new FileReader();
       reader.onloadend = () => setAvatar(reader.result);
       reader.readAsDataURL(file);
@@ -146,15 +180,10 @@ export default function AddBroker() {
             {/* Inputs */}
             <div className="grid w-full grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
               {[
-                ["First Name", "firstName"],
-                ["Last Name", "lastName"],
-                ["Date of Birth", "dob", "date"],
-                ["Title", "title"],
-                ["Country", "country"],
-                ["Broker ID", "brokerId"],
-                ["Address", "address"],
-                ["Postal Code", "postalCode"],
+                ["Username", "username"],
                 ["Email", "email", "email"],
+                ["Password", "password", "password"],
+                ["Confirm Password", "confirmPassword", "password"],
                 ["Phone Number", "phone"],
               ].map(([lbl, name, type]) => (
                 <InputField
@@ -167,32 +196,6 @@ export default function AddBroker() {
                 />
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* Broker Detail */}
-        <section
-          style={{ background: navy }}
-          className="rounded-lg p-6 pt-8 space-y-6"
-        >
-          <h2 className="text-lg font-semibold text-white">Broker Detail</h2>
-
-          <div className="grid grid-cols-[160px_1fr] gap-x-6 gap-y-4">
-            {[
-              ["Previous Agency", "previousAgency"],
-              ["Agency", "agency"],
-              ["Agent License", "agentLicense"],
-              ["Tax Number", "taxNumber"],
-            ].map(([lbl, name]) => (
-              <React.Fragment key={name}>
-                <label className="self-center text-white">{lbl}:</label>
-                <InputField
-                  name={name}
-                  value={broker[name]}
-                  onChange={handleChange}
-                />
-              </React.Fragment>
-            ))}
           </div>
         </section>
 

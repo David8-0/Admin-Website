@@ -17,7 +17,6 @@ export default function AllBrokers() {
     try {
       dispatch(setBrokersLoading(true));
       const response = await getUsersList({ role: 'broker' });
-      console.log("Brokers:", response.data.data);
       dispatch(setBrokersData(response.data.data));
     } catch (error) {
       console.error("Error fetching brokers:", error);
