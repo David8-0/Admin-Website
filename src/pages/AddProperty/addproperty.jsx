@@ -308,11 +308,13 @@ export default function AddProperty() {
                   className="h-8 w-full rounded bg-white px-2 text-gray-900 outline-none"
                 >
                   <option value="">Select Type</option>
-                  {Object.entries(PROPERTY_TYPES).map(([key, value]) => (
-                    <option key={key} value={key}>
-                      {value}
-                    </option>
-                  ))}
+                  {Object.entries(PROPERTY_TYPES)
+                    .filter(([key, value]) => value !== "")
+                    .map(([key, value]) => (
+                      <option key={key} value={key}>
+                        {value}
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -326,11 +328,13 @@ export default function AddProperty() {
                   className="h-8 w-full rounded bg-white px-2 text-gray-900 outline-none"
                 >
                   <option value="">Select Area</option>
-                  {Object.entries(AREA_RANGES).map(([key, value]) => (
-                    <option key={key} value={key}>
-                      {value}
-                    </option>
-                  ))}
+                  {Object.entries(AREA_RANGES)
+                    .filter(([key, value]) => value !== "")
+                    .map(([key, value]) => (
+                      <option key={key} value={key}>
+                        {value}
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -344,11 +348,13 @@ export default function AddProperty() {
                   className="h-8 w-full rounded bg-white px-2 text-gray-900 outline-none"
                 >
                   <option value="">Select Price</option>
-                  {Object.entries(PRICE_RANGES).map(([key, value]) => (
-                    <option key={key} value={key}>
-                      {value}
-                    </option>
-                  ))}
+                  {Object.entries(PRICE_RANGES)
+                    .filter(([key, value]) => value !== "")
+                    .map(([key, value]) => (
+                      <option key={key} value={key}>
+                        {value}
+                      </option>
+                    ))}
                 </select>
               </div>
 
