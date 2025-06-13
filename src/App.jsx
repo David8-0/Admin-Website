@@ -36,6 +36,7 @@ function App() {
           <Route path="add-broker" element={<AddBroker />} />
           <Route path="view-brokers" element={<AllBrokers />} />
           <Route path="add-property" element={<AddProperty />} />
+          <Route path="edit-property/:id" element={<AddProperty />} />
           <Route path="view-property" element={<PropertyList />} />
           <Route path="add-project" element={<AddProject />} />
           <Route path="edit-project/:id" element={<AddProject />} />

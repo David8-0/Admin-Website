@@ -1,9 +1,9 @@
 // src/components/AddProperty.jsx
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import { PROPERTY_TYPES, AREA_RANGES, PRICE_RANGES, PROPERTY_STATUS } from "../../../utils/constants";
-import { addPropertyToProject } from "../../network/properties";
+import { addPropertyToProject, getPropertyById, updateProperty } from "../../network/properties";
 import { uploadImages } from "../../network/images";
 
 const NAVY = "#002349";
@@ -11,6 +11,7 @@ const BORDER_BLUE = "#0BA5FF";
 
 export default function AddProperty() {
   const navigate = useNavigate();
+  const { id } = useParams();
 
   const [form, setForm] = useState({
     title: "",
@@ -26,6 +27,48 @@ export default function AddProperty() {
   const [images, setImages] = useState([]);
   const [imageFiles, setImageFiles] = useState([]);
   const [isImageChanged, setIsImageChanged] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchPropertyDetails = async () => {
+      if (id) {
+        try {
+          setLoading(true);
+          const response = await getPropertyById(id);
+          const propertyData = response.data.data;
+          
+          setForm({
+            title: propertyData.title || "",
+            description: propertyData.description || "",
+            type: propertyData.type || "",
+            areaRange: propertyData.areaRange || "",
+            priceRange: propertyData.priceRange || "",
+            status: propertyData.status || "available",
+            bedrooms: propertyData.bedrooms || "",
+            bathrooms: propertyData.bathrooms || "",
+            projectId: propertyData.projectId || "",
+          });
+          
+          if (propertyData.images) {
+            setImages(propertyData.images);
+          }
+          setIsImageChanged(false);
+        } catch (error) {
+          console.error('Property fetch error:', error);
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Failed to fetch property details",
+            confirmButtonColor: NAVY,
+          });
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchPropertyDetails();
+  }, [id]);
 
   const handleChange = ({ target: { name, value } }) =>
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -91,7 +134,7 @@ export default function AddProperty() {
       });
     }
 
-    if (imageFiles.length === 0) {
+    if (!id && imageFiles.length === 0) {
       return Swal.fire({
         icon: "error",
         title: "Missing images",
@@ -101,9 +144,13 @@ export default function AddProperty() {
     }
 
     try {
-      // Upload images first
-      const uploadResp = await uploadImages({ images: imageFiles, type: "property" });
-      const imageUrls = uploadResp.data.images;
+      let imageUrls = images;
+
+      // Only upload new images if they were changed
+      if (isImageChanged && imageFiles.length > 0) {
+        const uploadResp = await uploadImages({ images: imageFiles, type: "property" });
+        imageUrls = uploadResp.data.images;
+      }
 
       // Prepare property data
       const propertyData = {
@@ -112,13 +159,17 @@ export default function AddProperty() {
       };
 
       // Add property to project
-      await addPropertyToProject(form.projectId, propertyData);
+      if (id) {
+        await updateProperty(id, propertyData);
+      } else {
+        await addPropertyToProject(form.projectId, propertyData);
+      }
 
       // Success alert then redirect
       Swal.fire({
         icon: "success",
-        title: "Added successfully!",
-        text: "Your property has been saved.",
+        title: id ? "Updated successfully!" : "Added successfully!",
+        text: `Your property has been ${id ? 'updated' : 'saved'}.`,
         confirmButtonColor: NAVY,
       }).then(() => {
         navigate("/view-property");
@@ -128,7 +179,7 @@ export default function AddProperty() {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: error.response?.data?.message || "Failed to add property",
+        text: error.response?.data?.message || `Failed to ${id ? 'update' : 'add'} property`,
         confirmButtonColor: NAVY,
       });
     }
@@ -137,6 +188,17 @@ export default function AddProperty() {
   const handleCancelClick = () => {
     navigate(-1);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 font-sans flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#002349] mx-auto"></div>
+          <p className="mt-4 text-[#002349]">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -147,7 +209,7 @@ export default function AddProperty() {
             className="rounded px-8 py-[6px] text-sm font-semibold text-white -mt-1"
             style={{ backgroundColor: NAVY }}
           >
-            Add Property
+            {id ? 'Edit Property' : 'Add Property'}
           </span>
         </div>
 
