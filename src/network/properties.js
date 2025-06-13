@@ -1,9 +1,9 @@
 import { axiosInstance } from "./index.js";
 
-const getPropertiesList = async (params) => await axiosInstance.get('/api/projects/list-properties', {params});
+const getProperties = async (payload) => await axiosInstance.post('/api/projects/list-properties', payload);
 
-const addProperty = async (payload) => await axiosInstance.post('/api/properties', payload);
+const getPropertyById = async (id) => await axiosInstance.get(`/api/projects/property/${id}`);
 
 const deleteProperty = async (id) => await axiosInstance.delete(`/api/properties/${id}`);
 
-export { getPropertiesList, addProperty, deleteProperty };
+export { getProperties, getPropertyById, deleteProperty };
