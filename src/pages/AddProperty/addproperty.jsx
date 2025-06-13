@@ -1,8 +1,8 @@
 // src/components/AddProperty.jsx
 import React, { useState } from "react";
-import { Paperclip } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import { PROPERTY_TYPES, AREA_RANGES, PRICE_RANGES, PROPERTY_STATUS } from "../../../utils/constants";
 
 const NAVY = "#002349";
 const BORDER_BLUE = "#0BA5FF";
@@ -11,74 +11,88 @@ export default function AddProperty() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    developer: "",
-    area: "",
-    price: "",
-    type: "",
-    beds: "",
-    baths: "",
-    location: "",
+    title: "",
     description: "",
-    media: null,
-    features: [],
-    thumbnail: null,
+    type: "",
+    areaRange: "",
+    priceRange: "",
+    status: "available",
+    bedrooms: "",
+    bathrooms: "",
+    images: null,
   });
-
-  const featureList = [
-    "Parking In The Area",
-    "Air Conditioning",
-    "Security Guard",
-    "Terrace",
-    "Elevator Lift",
-    "Balcony",
-    "SuperMarket",
-  ];
 
   const handleChange = ({ target: { name, value } }) =>
     setForm((prev) => ({ ...prev, [name]: value }));
 
-  const toggleFeature = (feat) =>
-    setForm((prev) => ({
-      ...prev,
-      features: prev.features.includes(feat)
-        ? prev.features.filter((f) => f !== feat)
-        : [...prev.features, feat],
-    }));
+  const handleFile = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
 
-  const handleFile = (e, key) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () =>
-      setForm((prev) => ({ ...prev, [key]: reader.result }));
-    reader.readAsDataURL(file);
+    // Check if all files are images
+    const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
+    if (invalidFiles.length > 0) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid file type",
+        text: "Please upload only image files (JPEG, PNG, etc.)",
+        confirmButtonColor: NAVY,
+      });
+      return;
+    }
+
+    // Read all files
+    const readers = files.map(file => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+      });
+    });
+
+    // Update form with all images
+    Promise.all(readers).then(results => {
+      setForm(prev => ({ ...prev, images: results }));
+    });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Required text fields
+    // Required fields
     const required = [
-      "developer",
-      "area",
-      "price",
-      "type",
-      "beds",
-      "baths",
-      "location",
+      "title",
       "description",
+      "type",
+      "areaRange",
+      "priceRange",
+      "bedrooms",
+      "bathrooms",
     ];
 
     // Check empties
     const missing = required.filter((key) => !form[key]?.toString().trim());
-    if (missing.length > 0 || !form.thumbnail) {
+    if (missing.length > 0) {
       return Swal.fire({
         icon: "error",
         title: "Incomplete information",
-        text: "Please complete all fields and add a thumbnail.",
+        text: "Please complete all required fields.",
         confirmButtonColor: NAVY,
       });
     }
+
+    // Log form values
+    console.log('Form Values:', {
+      title: form.title,
+      description: form.description,
+      type: form.type,
+      areaRange: form.areaRange,
+      priceRange: form.priceRange,
+      status: form.status,
+      bedrooms: form.bedrooms,
+      bathrooms: form.bathrooms,
+      images: form.images
+    });
 
     // Save to localStorage
     const existing = JSON.parse(localStorage.getItem("properties") || "[]");
@@ -106,7 +120,7 @@ export default function AddProperty() {
         {/* top ribbon */}
         <div className="flex justify-center">
           <span
-            className=" rounded px-8 py-[6px] text-sm font-semibold text-white -mt-1"
+            className="rounded px-8 py-[6px] text-sm font-semibold text-white -mt-1"
             style={{ backgroundColor: NAVY }}
           >
             Add Property
@@ -120,14 +134,13 @@ export default function AddProperty() {
           className="mx-auto mt-6 w-[90%] max-w-3xl rounded border-2 p-6 sm:p-8"
           style={{ borderColor: BORDER_BLUE, backgroundColor: NAVY }}
         >
-          {/* thumbnail + fields */}
-          <div className="grid gap-4 sm:grid-cols-[160px_1fr]">
-            {/* image picker */}
+          {/* image picker */}
+          <div className="mb-6">
             <label className="group relative block h-40 w-40 overflow-hidden rounded">
-              {form.thumbnail ? (
+              {form.images ? (
                 <img
-                  src={form.thumbnail}
-                  alt="thumbnail"
+                  src={form.images[0]}
+                  alt="property"
                   className="h-full w-full object-cover"
                 />
               ) : (
@@ -137,92 +150,136 @@ export default function AddProperty() {
               )}
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/jpg,image/gif"
                 className="absolute inset-0 cursor-pointer opacity-0"
-                onChange={(e) => handleFile(e, "thumbnail")}
+                onChange={handleFile}
+                multiple={true}
               />
             </label>
+          </div>
 
-            {/* six small inputs + location */}
-            <div className="grid grid-cols-2 gap-4 text-[11px] font-semibold text-white md:grid-cols-3">
-              {[
-                ["Property Developer", "developer"],
-                ["Property Area", "area"],
-                ["Property Price", "price"],
-                ["Property Type", "type"],
-                ["No Of Bedrooms", "beds"],
-                ["No Of Bathrooms", "baths"],
-                ["Project-ID", "ID"],
-              ].map(([label, name]) => (
-                <div key={name} className="space-y-[2px]">
-                  <label htmlFor={name}>{label}</label>
-                  <input
-                    id={name}
-                    name={name}
-                    value={form[name]}
-                    onChange={handleChange}
-                    className="h-5 w-full rounded bg-white px-2 text-[10px] text-gray-900 outline-none"
-                  />
-                </div>
-              ))}
-              <div className="col-span-2 md:col-span-3 space-y-[2px]">
-                <label htmlFor="location">Location</label>
-                <input
-                  id="location"
-                  name="location"
-                  value={form.location}
+          {/* form fields */}
+          <div className="grid gap-4 text-sm text-white">
+            <div className="space-y-[2px]">
+              <label htmlFor="title">Title</label>
+              <input
+                id="title"
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                className="h-8 w-full rounded bg-white px-2 text-gray-900 outline-none"
+              />
+            </div>
+
+            <div className="space-y-[2px]">
+              <label htmlFor="description">Description</label>
+              <textarea
+                id="description"
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                rows={3}
+                className="w-full rounded bg-white p-2 text-gray-900 outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-[2px]">
+                <label htmlFor="type">Property Type</label>
+                <select
+                  id="type"
+                  name="type"
+                  value={form.type}
                   onChange={handleChange}
-                  className="h-5 w-full rounded bg-white px-2 text-[10px] text-gray-900 outline-none"
+                  className="h-8 w-full rounded bg-white px-2 text-gray-900 outline-none"
+                >
+                  <option value="">Select Type</option>
+                  {Object.entries(PROPERTY_TYPES).map(([key, value]) => (
+                    <option key={key} value={key}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-[2px]">
+                <label htmlFor="areaRange">Area Range</label>
+                <select
+                  id="areaRange"
+                  name="areaRange"
+                  value={form.areaRange}
+                  onChange={handleChange}
+                  className="h-8 w-full rounded bg-white px-2 text-gray-900 outline-none"
+                >
+                  <option value="">Select Area</option>
+                  {Object.entries(AREA_RANGES).map(([key, value]) => (
+                    <option key={key} value={key}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-[2px]">
+                <label htmlFor="priceRange">Price Range</label>
+                <select
+                  id="priceRange"
+                  name="priceRange"
+                  value={form.priceRange}
+                  onChange={handleChange}
+                  className="h-8 w-full rounded bg-white px-2 text-gray-900 outline-none"
+                >
+                  <option value="">Select Price</option>
+                  {Object.entries(PRICE_RANGES).map(([key, value]) => (
+                    <option key={key} value={key}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-[2px]">
+                <label htmlFor="status">Status</label>
+                <select
+                  id="status"
+                  name="status"
+                  value={form.status}
+                  onChange={handleChange}
+                  className="h-8 w-full rounded bg-white px-2 text-gray-900 outline-none"
+                >
+                  {Object.entries(PROPERTY_STATUS).map(([key, value]) => (
+                    <option key={key} value={key}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-[2px]">
+                <label htmlFor="bedrooms">Bedrooms</label>
+                <input
+                  id="bedrooms"
+                  name="bedrooms"
+                  type="number"
+                  min="1"
+                  value={form.bedrooms}
+                  onChange={handleChange}
+                  className="h-8 w-full rounded bg-white px-2 text-gray-900 outline-none"
                 />
               </div>
-            </div>
-          </div>
 
-          {/* description */}
-          <div className="mt-6 space-y-[2px] text-sm text-white">
-            <label htmlFor="description">Description:</label>
-            <textarea
-              id="description"
-              name="description"
-              rows={6}
-              value={form.description}
-              onChange={handleChange}
-              className="w-full rounded bg-white p-2 text-[13px] text-gray-900 outline-none"
-            />
-          </div>
-
-          {/* media upload */}
-          <div className="mt-6 space-y-[2px] text-sm text-white">
-            <label>Media:</label>
-            <div className="relative">
-              <input
-                type="file"
-                accept="*/*"
-                onChange={(e) => handleFile(e, "media")}
-                className="h-8 w-full rounded bg-white px-3 py-[3px] text-[12px] text-gray-900 outline-none file:hidden"
-              />
-              <Paperclip
-                size={18}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-700"
-              />
-            </div>
-          </div>
-
-          {/* features checklist */}
-          <div className="mt-6 text-sm text-white">
-            <p className="mb-2 font-semibold">Additional features:</p>
-            <div className="grid grid-cols-2 gap-y-1 text-[13px]">
-              {featureList.map((feat) => (
-                <label key={feat} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={form.features.includes(feat)}
-                    onChange={() => toggleFeature(feat)}
-                    className="h-3 w-3 accent-white"
-                  />
-                  <span>{feat}</span>
-                </label>
-              ))}
+              <div className="space-y-[2px]">
+                <label htmlFor="bathrooms">Bathrooms</label>
+                <input
+                  id="bathrooms"
+                  name="bathrooms"
+                  type="number"
+                  min="1"
+                  value={form.bathrooms}
+                  onChange={handleChange}
+                  className="h-8 w-full rounded bg-white px-2 text-gray-900 outline-none"
+                />
+              </div>
             </div>
           </div>
         </form>
