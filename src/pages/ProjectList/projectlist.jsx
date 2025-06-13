@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import SearchBar from "../../components/Searchbar/searchbar.jsx";
 import { useDispatch, useSelector } from "react-redux";
-import { getProjectsList } from "../../network/projects";
+import { getProjectsList, deleteProject } from "../../network/projects";
 import { setProjectsData, setProjectsError, setProjectsLoading } from "../../store/projectsSlice";
 
 const NAVY = "#002349";
@@ -51,17 +51,21 @@ export default function ProjectList() {
       });
 
       if (result.isConfirmed) {
-        // TODO: Call deleteProject API when available
-        console.log("Deleting project:", projectId);
+        await deleteProject(projectId);
         await fetchProjects(); // Refresh the list after deletion
-        Swal.fire("Deleted!", "", "success");
+        Swal.fire({
+          icon: "success",
+          title: "Deleted!",
+          text: "Project has been deleted successfully.",
+          confirmButtonColor: NAVY,
+        });
       }
     } catch (error) {
       console.error("Error deleting project:", error);
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Failed to delete project",
+        text: error.response?.data?.message || "Failed to delete project",
         confirmButtonColor: "#002855",
       });
     }
