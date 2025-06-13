@@ -4,6 +4,6 @@ const getProperties = async (payload) => await axiosInstance.post('/api/projects
 
 const getPropertyById = async (id) => await axiosInstance.get(`/api/projects/property/${id}`);
 
-const deleteProperty = async (id) => await axiosInstance.delete(`/api/properties/${id}`);
+const deleteProperty = async (id) => await axiosInstance.delete(`/api/projects/property/${id}`);
 
 export { getProperties, getPropertyById, deleteProperty };
