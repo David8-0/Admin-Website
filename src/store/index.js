@@ -5,6 +5,7 @@ import appointmentsReducer from "./appointmentsSlice";
 import usersReducer from "./usersSlice";
 import buyersReducer from './buyersSlice';
 import brokersReducer from './brokersSlice';
+import projectsReducer from './projectsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     users: usersReducer,
     buyers: buyersReducer,
     brokers: brokersReducer,
+    projects: projectsReducer,
   },
 });
 
