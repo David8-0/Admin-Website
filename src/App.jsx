@@ -38,6 +38,7 @@ function App() {
           <Route path="add-property" element={<AddProperty />} />
           <Route path="view-property" element={<PropertyList />} />
           <Route path="add-project" element={<AddProject />} />
+          <Route path="edit-project/:id" element={<AddProject />} />
           <Route path="view-project" element={<ProjectList />} />
         </Route>
       </Routes>

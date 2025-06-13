@@ -132,6 +132,9 @@ export default function ProjectList() {
               />
               <div className="flex-1 text-white ml-4 space-y-1">
                 <p>
+                  <span className="font-semibold">ID:</span> {project._id}
+                </p>
+                <p>
                   <span className="font-semibold">Name:</span> {project.name}
                 </p>
                 <p>

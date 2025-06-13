@@ -4,4 +4,10 @@ const getProjectsList = async (params) => await axiosInstance.get('/api/projects
 
 const deleteProject = async (id) => await axiosInstance.delete(`/api/projects/${id}`);
 
-export { getProjectsList, deleteProject };
+const createProject = async (payload) => await axiosInstance.post('/api/projects', payload);
+
+const getProjectById = async (id) => await axiosInstance.get(`/api/projects/${id}`);
+
+const updateProject = async (id, payload) => await axiosInstance.put(`/api/projects/${id}`, payload);
+
+export { getProjectsList, deleteProject, createProject, getProjectById, updateProject };

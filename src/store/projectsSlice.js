@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
   projectsData: null,
+  projectDetails: null,
   loading: false,
   error: null,
 };
@@ -12,6 +13,10 @@ const projectsSlice = createSlice({
   reducers: {
     setProjectsData: (state, action) => {
       state.projectsData = action.payload;
+      state.error = null;
+    },
+    setProjectDetails: (state, action) => {
+      state.projectDetails = action.payload;
       state.error = null;
     },
     setProjectsError: (state, action) => {
@@ -25,6 +30,7 @@ const projectsSlice = createSlice({
 
 export const {
   setProjectsData,
+  setProjectDetails,
   setProjectsError,
   setProjectsLoading
 } = projectsSlice.actions;
