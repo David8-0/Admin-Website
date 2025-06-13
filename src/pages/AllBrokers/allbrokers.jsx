@@ -1,28 +1,46 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import bannerImg from "../../assets/land.svg";
 import Swal from "sweetalert2";
+import { useDispatch, useSelector } from "react-redux";
+import { getUsersList, deleteUser } from "../../network/users";
+import { setBrokersData, setBrokersError, setBrokersLoading } from "../../store/brokersSlice";
+
 const NAVY = "#002349";
 
 export default function AllBrokers() {
-  const [brokers, setBrokers] = useState([]);
+  const dispatch = useDispatch();
+  const { brokersData: brokers, loading, error } = useSelector((state) => state.brokers);
 
-  /* ─────────── load saved brokers ─────────── */
-  useEffect(() => {
-    setBrokers(JSON.parse(localStorage.getItem("brokers") || "[]"));
-  }, []);
-
-  /* ─────────── delete broker card ─────────── */
-  const removeBroker = (id) => {
-    const next = brokers.filter((b) => b.id !== id);
-    localStorage.setItem("brokers", JSON.stringify(next));
-    setBrokers(next);
+  const fetchBrokers = async () => {
+    try {
+      dispatch(setBrokersLoading(true));
+      const response = await getUsersList({ role: 'broker' });
+      console.log("Brokers:", response.data.data);
+      dispatch(setBrokersData(response.data.data));
+    } catch (error) {
+      console.error("Error fetching brokers:", error);
+      dispatch(setBrokersError(error.message));
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to load brokers",
+        confirmButtonColor: "#002855",
+      });
+    } finally {
+      dispatch(setBrokersLoading(false));
+    }
   };
+
+  useEffect(() => {
+    fetchBrokers();
+  }, [dispatch]);
+
   const handleDeleteClick = (id) => {
     Swal.fire({
       title: "Delete this broker?",
-      text: "This action can’t be undone.",
+      text: "This action can't be undone.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
@@ -30,19 +48,61 @@ export default function AllBrokers() {
       confirmButtonText: "Yes, delete",
       cancelButtonText: "Cancel",
       padding: "1.5rem",
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        removeBroker(id);
-        Swal.fire({
-          title: "Deleted!",
-          text: "The broker has been removed.",
-          icon: "success",
-          timer: 1500,
-          showConfirmButton: false,
-        });
+        try {
+          await deleteUser(id);
+          // Refresh the brokers list after successful deletion
+          fetchBrokers();
+          Swal.fire({
+            title: "Deleted!",
+            text: "The broker has been removed.",
+            icon: "success",
+            timer: 1500,
+            showConfirmButton: false,
+          });
+        } catch (error) {
+          console.error("Error deleting broker:", error);
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Failed to delete broker",
+            confirmButtonColor: "#002855",
+          });
+        }
       }
     });
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-red-500 text-xl">Error: {error}</p>
+      </div>
+    );
+  }
+
+  if (!brokers || brokers.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <h1 className="text-[#002349] font-bold text-xl mb-2">
+            Brokers
+          </h1>
+          <p className="text-gray-500">No brokers available</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <section className="min-h-screen bg-gray-50 font-sans">
       {/* ───────────────── banner ───────────────── */}
@@ -60,7 +120,7 @@ export default function AllBrokers() {
 
       {/* ───────────────── main content ───────────────── */}
       <div className="mx-auto max-w-6xl px-4 py-12">
-        {/* heading + “Add New” */}
+        {/* heading + "Add New" */}
         <div className="relative mb-10 flex items-center justify-center">
           <h2 className="text-xs font-semibold tracking-wide text-gray-700">
             All Brokers / All Brokers listing
@@ -76,67 +136,61 @@ export default function AllBrokers() {
         </div>
 
         {/* grid of cards */}
-        {brokers.length === 0 ? (
-          <p className="pt-20 text-center text-sm text-gray-400">
-            No brokers added yet.
-          </p>
-        ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {brokers.map((b) => (
-              <article
-                key={b.id}
-                className="relative rounded-md border border-gray-300 bg-[#D9D9D9] p-4 shadow-sm text-[20px] font-semibold text-gray-800"
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {brokers.map((b) => (
+            <article
+              key={b._id}
+              className="relative rounded-md border border-gray-300 bg-[#D9D9D9] p-4 shadow-sm text-[20px] font-semibold text-gray-800"
+            >
+              {/* avatar */}
+              <div className="flex justify-center">
+                {b.avatar ? (
+                  <img
+                    src={b.avatar}
+                    alt={`${b.firstName} ${b.lastName}`}
+                    className="h-16 w-16 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-16 w-16 rounded-full bg-gray-300" />
+                )}
+              </div>
+
+              {/* name + title */}
+              <h3 className="mt-2 text-center capitalize text-gray-900">
+                {b.firstName} {b.lastName}
+              </h3>
+              <p className="-mt-1 text-center capitalize text-gray-600 text-[16px]">
+                {b.title || "real-estate broker"}
+              </p>
+
+              {/* description */}
+              <p className="mt-3 leading-6">
+                Answering guest inquiries, directing phone calls, coordinating
+                travel plans, and more
+              </p>
+
+              {/* contact info */}
+              <div className="mt-3 space-y-1">
+                <p>
+                  <span className="font-semibold">Email:</span> {b.email}
+                </p>
+                <p>
+                  <span className="font-semibold">phone number:</span>{" "}
+                  {b.phone}
+                </p>
+              </div>
+
+              {/* delete button */}
+              <button
+                onClick={() => handleDeleteClick(b._id)}
+                className="absolute bottom-3 right-3 text-gray-600 transition-colors hover:text-red-600"
+                title="Delete broker"
               >
-                {/* avatar */}
-                <div className="flex justify-center">
-                  {b.avatar ? (
-                    <img
-                      src={b.avatar}
-                      alt={`${b.firstName} ${b.lastName}`}
-                      className="h-16 w-16 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-16 w-16 rounded-full bg-gray-300" />
-                  )}
-                </div>
-
-                {/* name + title */}
-                <h3 className="mt-2 text-center capitalize text-gray-900">
-                  {b.firstName} {b.lastName}
-                </h3>
-                <p className="-mt-1 text-center capitalize text-gray-600 text-[16px]">
-                  {b.title || "real-estate broker"}
-                </p>
-
-                {/* description */}
-                <p className="mt-3 leading-6">
-                  Answering guest inquiries, directing phone calls, coordinating
-                  travel plans, and more
-                </p>
-
-                {/* contact info */}
-                <div className="mt-3 space-y-1">
-                  <p>
-                    <span className="font-semibold">Email:</span> {b.email}
-                  </p>
-                  <p>
-                    <span className="font-semibold">phone number:</span>{" "}
-                    {b.phone}
-                  </p>
-                </div>
-
-                {/* delete button */}
-                <button
-                  onClick={() => handleDeleteClick(b.id)}
-                  className="absolute bottom-3 right-3 text-gray-600 transition-colors hover:text-red-600"
-                  title="Delete broker"
-                >
-                  <Trash2 size={20} />
-                </button>
-              </article>
-            ))}
-          </div>
-        )}
+                <Trash2 size={20} />
+              </button>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );
