@@ -16,13 +16,11 @@ export default function ProjectList() {
   const { projectsData: projects, loading, error } = useSelector((state) => state.projects);
   const [searchValue, setSearchValue] = useState("");
 
-  console.log("projects", projects);
 
   const fetchProjects = async () => {
     try {
       dispatch(setProjectsLoading(true));
       const response = await getProjectsList({query: searchValue});
-      console.log("response", response.data?.data);
       const projectsArray = Array.isArray(response.data?.data) ? response?.data?.data : [];
       dispatch(setProjectsData(projectsArray));
     } catch (error) {

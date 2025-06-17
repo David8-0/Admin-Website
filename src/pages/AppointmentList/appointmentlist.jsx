@@ -21,7 +21,6 @@ export default function AppointmentList() {
       try {
         dispatch(setAppointmentsLoading(true));
         const response = await getAppointments();
-        console.log(response.data.data);
         dispatch(setAppointmentsData(response.data.data));
       } catch (err) {
         dispatch(setAppointmentsError(err.message || 'Failed to fetch appointments'));

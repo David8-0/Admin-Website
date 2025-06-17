@@ -16,7 +16,6 @@ export default function BuyerPage() {
     try {
       dispatch(setBuyersLoading(true));
       const response = await getUsersList({ role: 'buyer' });
-      console.log("Buyers:", response.data.data);
       dispatch(setBuyersData(response.data.data));
     } catch (error) {
       console.error("Error fetching buyers:", error);

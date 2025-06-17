@@ -30,9 +30,6 @@ export default function PropertyList() {
   const [selectedPrice, setSelectedPrice] = useState("");
   const [imageErrors, setImageErrors] = useState({});
 
-  useEffect(() => {
-    console.log("properties", properties);
-  }, [properties]);
 
   const propertyTypes = Object.keys(PROPERTY_TYPES).filter(key => key !== 'all');
   const areaOptions = Object.keys(AREA_RANGES).filter(key => key !== 'all');
