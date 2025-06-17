@@ -119,9 +119,17 @@ export default function BuyerPage() {
           >
             {/* Avatar */}
             <div className="mx-auto sm:mx-0 h-24 w-24 sm:h-50 sm:w-40 overflow-hidden rounded-lg border border-gray-200">
-              <div className="h-full w-full bg-gray-200 flex items-center justify-center text-gray-500">
-                {(b.username || '?').charAt(0).toUpperCase()}
-              </div>
+              {b.image ? (
+                <img
+                  src={b.image}
+                  alt={b.username || 'User'}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="h-full w-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-semibold">
+                  {(b.username || '?').charAt(0).toUpperCase()}
+                </div>
+              )}
             </div>
 
             {/* Left Info */}
