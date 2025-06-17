@@ -143,14 +143,16 @@ export default function AllBrokers() {
             >
               {/* avatar */}
               <div className="flex justify-center">
-                {b.avatar ? (
+                {b.image ? (
                   <img
-                    src={b.avatar}
+                    src={b.image}
                     alt={`${b.firstName} ${b.lastName}`}
                     className="h-16 w-16 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="h-16 w-16 rounded-full bg-gray-300" />
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-300 text-2xl font-semibold text-gray-600">
+                    {b.firstName ? b.firstName[0].toUpperCase() : '?'}
+                  </div>
                 )}
               </div>
 
